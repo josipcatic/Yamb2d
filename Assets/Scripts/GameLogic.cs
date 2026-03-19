@@ -9,6 +9,7 @@ public class GameLogic : MonoBehaviour
     [SerializeField] TextMeshProUGUI[] dice;
     [SerializeField] TextMeshProUGUI throwsLeft;
     [SerializeField] Image[] diceImages;
+    [SerializeField] Image callImage;
 
     int min, max, currentNumber, maximumThrows, currentTrow;
     bool[] isLocked;
@@ -25,6 +26,7 @@ public class GameLogic : MonoBehaviour
         Roll();
         currentTrow--;
         throwsLeft.text = "Current throw: " + (currentTrow % 3).ToString();
+        GameData.call = false;
     }
 
     public void Roll()
@@ -52,12 +54,23 @@ public class GameLogic : MonoBehaviour
 
     public void Lock(int i)
     {
+        if (currentTrow == 0)
+            return;
         isLocked[i] = !isLocked[i];
 
         if (isLocked[i])
             diceImages[i].color = lockedColor;
         else
             diceImages[i].color = unlockedColor;
+    }
+
+    public void Call()
+    {
+        if (currentTrow <= 1)
+        {
+            GameData.call = true;
+            callImage.color = Color.green;
+        }
     }
 
     public void SaveDice()

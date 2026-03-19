@@ -2,37 +2,45 @@ using System;
 using TMPro;
 using UnityEngine;
 
+public enum RowType
+{
+    Ones,
+    Twos,
+    Threes,
+    Fours,
+    Fives,
+    Sixes,
+    Minimum,
+    Maximum,
+    TwoPair,
+    ThreeOfKind,
+    Straight,
+    FullHouse,
+    Poker,
+    Yamb
+}
+
+public enum ColumnType
+{
+    Down,
+    Up,
+    Free,
+    Call
+}
 
 
 public class Scoring : MonoBehaviour
 {
-    public enum RowType
-    {
-        Ones,
-        Twos,
-        Threes,
-        Fours,
-        Fives,
-        Sixes,
-        Minimum,
-        Maximum,
-        TwoPair,
-        ThreeOfKind,
-        Straight,
-        FullHouse,
-        Poker,
-        Yamb
-    }
 
     [SerializeField] TextMeshProUGUI scoreText;
     [SerializeField] TextMeshProUGUI[] cells;
 
     int[] diceScores;
-    bool[,] written = new bool[14, 4];
-    int[,] scores = new int[14, 4];
+    bool canWrite = false;
 
     void Start()
     {
+        canWrite = true;
         scoreText.text = "Your rolled dice: ";
         diceScores = new int[GameData.diceValues.Length];
 
@@ -47,13 +55,40 @@ public class Scoring : MonoBehaviour
         {
             scoreText.text += diceScores[i].ToString() + " ";
         }
+
+        RestoreTable();
     }
 
-    public void SelectCell(int row, int col)
+    void RestoreTable()
     {
-        if (written[row, col])
+        for (int r = 0; r < 14; r++)
+        {
+            for (int c = 0; c < 4; c++)
+            {
+                if (GameData.written[r, c])
+                {
+                    UpdateText(r, c, GameData.scores[r, c]);
+                }
+            }
+        }
+    }
+
+    public void SelectCell(int index)
+    {
+        int row = index / 4;
+        int col = index % 4;
+
+        ColumnType columnType = (ColumnType)col;
+
+        if (GameData.written[row, col])
         {
             Debug.Log("Already written");
+            return;
+        }
+
+        if (!IsMoveAllowed(row, col, columnType))
+        {
+            Debug.Log("Not allowed in this column");
             return;
         }
 
@@ -61,12 +96,69 @@ public class Scoring : MonoBehaviour
 
         int score = CalculateScore(type);
 
-        scores[row, col] = score;
-        written[row, col] = true;
+        GameData.scores[row, col] = score;
+        GameData.written[row, col] = true;
 
         UpdateText(row, col, score);
+
+        canWrite = false;
     }
 
+    bool IsMoveAllowed(int row, int col, ColumnType columnType)
+    {
+        if (canWrite)
+        {
+            switch (columnType)
+            {
+                case ColumnType.Down:
+                    return CheckDown(row, col);
+
+                case ColumnType.Up:
+                    return CheckUp(row, col);
+
+                case ColumnType.Free:
+                    return CheckBoth(row,col);
+
+                case ColumnType.Call:
+                    return CheckCall(row, col);
+            }
+        }
+        return false;
+    }
+
+    bool CheckDown(int row, int col)
+    {
+        if (GameData.call)
+            return false;
+        if (row == 0)
+            return true;
+   
+        return GameData.written[row - 1, col];
+    }
+    bool CheckBoth(int row, int col)
+    {
+        if (GameData.call)
+            return false;
+
+        return true;
+    }
+
+    bool CheckUp(int row, int col)
+    {
+        if (GameData.call)
+            return false;
+        if (row == 13)
+            return true;
+
+        return GameData.written[row + 1, col];
+    }
+    bool CheckCall(int row, int col)
+    {
+        if (GameData.call == false)
+            return false;
+
+        return true;
+    }
     int[] GetCounts()
     {
         int[] counts = new int[7];
@@ -76,6 +168,8 @@ public class Scoring : MonoBehaviour
 
         return counts;
     }
+
+
 
     int CalculateScore(RowType type)
     {
@@ -175,8 +269,8 @@ public class Scoring : MonoBehaviour
             counts[5] == 1 &&
             counts[6] == 1;
 
-        if (small) return 15;
-        if (big) return 20;
+        if (small) return 35;
+        if (big) return 45;
 
         return 0;
     }

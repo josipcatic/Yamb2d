@@ -99,6 +99,9 @@ public class Scoring : MonoBehaviour
         GameData.scores[row, col] = score;
         GameData.written[row, col] = true;
 
+        GameData.call = false;
+        GameData.callRow = -1;
+
         UpdateText(row, col, score);
 
         canWrite = false;
@@ -154,7 +157,13 @@ public class Scoring : MonoBehaviour
     }
     bool CheckCall(int row, int col)
     {
-        if (GameData.call == false)
+        if (!GameData.call)
+            return false;
+
+        if (col != GameData.callColumn)
+            return false;
+
+        if (row != GameData.callRow)
             return false;
 
         return true;

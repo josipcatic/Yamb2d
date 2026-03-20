@@ -10,6 +10,7 @@ public class GameLogic : MonoBehaviour
     [SerializeField] TextMeshProUGUI throwsLeft;
     [SerializeField] Image[] diceImages;
     [SerializeField] Image callImage;
+    [SerializeField] GameObject callPanel;
 
     int min, max, currentNumber, maximumThrows, currentTrow;
     bool[] isLocked;
@@ -27,6 +28,7 @@ public class GameLogic : MonoBehaviour
         currentTrow--;
         throwsLeft.text = "Current throw: " + (currentTrow % 3).ToString();
         GameData.call = false;
+        callPanel.SetActive(false);
     }
 
     public void Roll()
@@ -68,10 +70,25 @@ public class GameLogic : MonoBehaviour
     {
         if (currentTrow <= 1)
         {
-            GameData.call = true;
-            callImage.color = Color.green;
+            ShowCallButtons();
         }
     }
+
+    void ShowCallButtons()
+    {
+        callPanel.SetActive(true);
+    }
+
+    public void SelectCallRow(int row)
+    {
+        GameData.call = true;
+        GameData.callRow = row;
+
+        callPanel.SetActive(false);
+
+        callImage.color = Color.green;
+    }
+
 
     public void SaveDice()
     {

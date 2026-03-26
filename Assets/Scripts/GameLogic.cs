@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -13,52 +12,74 @@ public class GameLogic : MonoBehaviour
     [SerializeField] Image callImage;
     [SerializeField] GameObject callPanel;
     [SerializeField] Sprite[] diceSprites;
+    [SerializeField] private AudioSource sfxSource;
+    [SerializeField] private AudioClip rollSound;
 
     int min, max, currentNumber, maximumThrows, currentTrow;
     bool[] isLocked;
 
     Color lockedColor = Color.gray;
     Color unlockedColor = Color.white;
+
     void Start()
     {
         min = 1;
         max = 7;
         maximumThrows = 3;
+
         currentTrow = GameData.currentThrow;
+
         isLocked = new bool[dice.Length];
+
         DisplayDice();
         UpdateThrowText();
+
         GameData.call = false;
         callPanel.SetActive(false);
     }
 
+
+
+    public void OnRollPressed()
+    {
+        sfxSource.PlayOneShot(rollSound);
+        Roll();
+    }
+
+
     public void Roll()
     {
+        if (currentTrow >= maximumThrows)
+            return;
+
         for (int i = 0; i < dice.Length; i++)
         {
-            if (isLocked[i] == false && currentTrow < maximumThrows)
-            {
-                currentNumber = UnityEngine.Random.Range(min, max);
-                GameData.diceValues[i] = currentNumber;
-                diceImages[i].sprite = diceSprites[currentNumber - 1 ];
-                
-            }
+            if (isLocked[i])
+                continue;
+
+            currentNumber = UnityEngine.Random.Range(min, max);
+
+            GameData.diceValues[i] = currentNumber;
+            diceImages[i].sprite = diceSprites[currentNumber - 1];
         }
+
         currentTrow++;
         GameData.currentThrow = currentTrow;
-        UpdateThrowText();
 
+        UpdateThrowText();
     }
 
     void UpdateThrowText()
     {
-        if (currentTrow < maximumThrows)
+        int rollsLeft = maximumThrows - currentTrow;
+
+        if (rollsLeft > 0)
         {
-            throwsLeft.text = "Current throw: " + currentTrow.ToString();
+            throwsLeft.text = "Rolls left: " + rollsLeft;
         }
         else
         {
-            throwsLeft.text = "Cannot roll more.";
+            throwsLeft.text = "No rolls left.";
         }
     }
 
@@ -66,20 +87,16 @@ public class GameLogic : MonoBehaviour
     {
         if (currentTrow == 0)
             return;
+
         isLocked[i] = !isLocked[i];
 
-        if (isLocked[i])
-            diceImages[i].color = lockedColor;
-        else
-            diceImages[i].color = unlockedColor;
+        diceImages[i].color = isLocked[i] ? lockedColor : unlockedColor;
     }
 
     public void Call()
     {
         if (currentTrow <= 1)
-        {
             ShowCallButtons();
-        }
     }
 
     void ShowCallButtons()
@@ -93,36 +110,29 @@ public class GameLogic : MonoBehaviour
         GameData.callRow = row;
 
         callPanel.SetActive(false);
-
         callImage.color = Color.green;
     }
-
 
     public void SaveDice()
     {
         for (int i = 0; i < dice.Length; i++)
-        {
             GameData.diceValues[i] = int.Parse(dice[i].text);
-        }
     }
 
     public void DisplayDice()
     {
-        for (int i = 0; i < dice.Length;i++)
-        {
+        for (int i = 0; i < dice.Length; i++)
             diceImages[i].sprite = diceSprites[GameData.diceValues[i] - 1];
-        }
     }
 
     public void LoadScoreScene()
     {
         Scoring.isTableView = false;
-        if (currentTrow > 0)
-        {
-            GameData.canWrite = true;            
-        }
-        SceneManager.LoadScene("Write Scene");
 
+        if (currentTrow > 0)
+            GameData.canWrite = true;
+
+        SceneManager.LoadScene("Write Scene");
     }
 
     public void LoadTableScene()

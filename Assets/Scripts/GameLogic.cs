@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using TMPro;
 using UnityEngine;
@@ -11,6 +12,7 @@ public class GameLogic : MonoBehaviour
     [SerializeField] Image[] diceImages;
     [SerializeField] Image callImage;
     [SerializeField] GameObject callPanel;
+    [SerializeField] Sprite[] diceSprites;
 
     int min, max, currentNumber, maximumThrows, currentTrow;
     bool[] isLocked;
@@ -22,11 +24,10 @@ public class GameLogic : MonoBehaviour
         min = 1;
         max = 7;
         maximumThrows = 3;
-        currentTrow = 0;
+        currentTrow = GameData.currentThrow;
         isLocked = new bool[dice.Length];
-        Roll();
-        currentTrow--;
-        throwsLeft.text = "Current throw: " + (currentTrow % 3).ToString();
+        DisplayDice();
+        UpdateThrowText();
         GameData.call = false;
         callPanel.SetActive(false);
     }
@@ -37,12 +38,20 @@ public class GameLogic : MonoBehaviour
         {
             if (isLocked[i] == false && currentTrow < maximumThrows)
             {
-                currentNumber = Random.Range(min, max);
-                dice[i].text = currentNumber.ToString();
+                currentNumber = UnityEngine.Random.Range(min, max);
+                GameData.diceValues[i] = currentNumber;
+                diceImages[i].sprite = diceSprites[currentNumber - 1 ];
                 
             }
         }
         currentTrow++;
+        GameData.currentThrow = currentTrow;
+        UpdateThrowText();
+
+    }
+
+    void UpdateThrowText()
+    {
         if (currentTrow < maximumThrows)
         {
             throwsLeft.text = "Current throw: " + currentTrow.ToString();
@@ -51,7 +60,6 @@ public class GameLogic : MonoBehaviour
         {
             throwsLeft.text = "Cannot roll more.";
         }
-
     }
 
     public void Lock(int i)
@@ -98,10 +106,28 @@ public class GameLogic : MonoBehaviour
         }
     }
 
+    public void DisplayDice()
+    {
+        for (int i = 0; i < dice.Length;i++)
+        {
+            diceImages[i].sprite = diceSprites[GameData.diceValues[i] - 1];
+        }
+    }
+
     public void LoadScoreScene()
     {
-        SaveDice();
+        Scoring.isTableView = false;
+        if (currentTrow > 0)
+        {
+            GameData.canWrite = true;            
+        }
         SceneManager.LoadScene("Write Scene");
 
+    }
+
+    public void LoadTableScene()
+    {
+        Scoring.isTableView = true;
+        SceneManager.LoadScene("Write Scene");
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using TMPro;
 using UnityEngine;
 
@@ -10,8 +11,8 @@ public enum RowType
     Fours,
     Fives,
     Sixes,
-    Minimum,
     Maximum,
+    Minimum,
     TwoPair,
     ThreeOfKind,
     Straight,
@@ -34,14 +35,23 @@ public class Scoring : MonoBehaviour
 
     [SerializeField] TextMeshProUGUI scoreText;
     [SerializeField] TextMeshProUGUI[] cells;
+    [SerializeField] TextMeshProUGUI buttonText;
 
     int[] diceScores;
-    bool canWrite = false;
+    public static bool isTableView = false;
 
     void Start()
     {
-        canWrite = true;
-        scoreText.text = "Your rolled dice: ";
+        if(isTableView)
+        {
+            buttonText.text = "Back";
+        }
+        else
+        {
+            buttonText.text = "Next round";
+        }
+
+            scoreText.text = "Your rolled dice: ";
         diceScores = new int[GameData.diceValues.Length];
 
         for (int i = 0; i < GameData.diceValues.Length; i++)
@@ -104,12 +114,13 @@ public class Scoring : MonoBehaviour
 
         UpdateText(row, col, score);
 
-        canWrite = false;
+        GameData.canWrite = false;
+        GameData.currentThrow = 0;
     }
 
     bool IsMoveAllowed(int row, int col, ColumnType columnType)
     {
-        if (canWrite)
+        if (GameData.canWrite)
         {
             switch (columnType)
             {
@@ -235,6 +246,7 @@ public class Scoring : MonoBehaviour
     {
         int pairs = 0;
         int sum = 0;
+        int multiplier = 10;
 
         for (int i = 6; i >= 1; i--)
         {
@@ -246,17 +258,18 @@ public class Scoring : MonoBehaviour
         }
 
         if (pairs >= 2)
-            return sum;
+            return sum + multiplier;
 
         return 0;
     }
 
     int ScoreThree(int[] counts)
     {
+        int multiplier = 20;
         for (int i = 1; i <= 6; i++)
         {
             if (counts[i] >= 3)
-                return i * 3;
+                return (i * 3) + multiplier;
         }
 
         return 0;
@@ -278,8 +291,8 @@ public class Scoring : MonoBehaviour
             counts[5] == 1 &&
             counts[6] == 1;
 
-        if (small) return 35;
-        if (big) return 45;
+        if (small) return 45;
+        if (big) return 50;
 
         return 0;
     }
@@ -289,6 +302,7 @@ public class Scoring : MonoBehaviour
         bool three = false;
         bool two = false;
         int sum = 0;
+        int multiplier = 40;
 
         for (int i = 1; i <= 6; i++)
         {
@@ -299,17 +313,18 @@ public class Scoring : MonoBehaviour
         }
 
         if (three && two)
-            return sum + 25;
+            return sum + multiplier;
 
         return 0;
     }
 
     int ScorePoker(int[] counts)
     {
+        int multiplier = 50;
         for (int i = 1; i <= 6; i++)
         {
             if (counts[i] >= 4)
-                return i * 4 + 40;
+                return i * 4 + multiplier;
         }
 
         return 0;
@@ -317,10 +332,11 @@ public class Scoring : MonoBehaviour
 
     int ScoreYamb(int[] counts)
     {
+        int multiplier = 60;
         for (int i = 1; i <= 6; i++)
         {
             if (counts[i] == 5)
-                return i * 5 + 50;
+                return i * 5 + multiplier;
         }
 
         return 0;
